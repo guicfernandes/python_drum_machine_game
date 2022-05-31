@@ -1,5 +1,5 @@
 import pygame
-from pygame import mixer
+from pygame import KEYDOWN, mixer
 
 
 pygame.init()
@@ -40,6 +40,9 @@ saved_beats = []
 with open('saved_beats.txt', 'r') as file:
     for line in file:
         saved_beats.append(line)
+
+beat_name = ''
+typing = False
 
 # load in sounds
 hi_hat = mixer.Sound('sounds\hi hat.WAV')
@@ -114,22 +117,54 @@ def draw_grid(clicks, beat, actives):
     return boxes
 
 
-def draw_save_menu():
+def draw_save_menu(beat_name, typing):
     pygame.draw.rect(screen, black, [0, 0, WIDTH, HEIGTH])
+    menu_text = label_font.render(
+        'SAVE MENU: Enter a Name for Current Beat', True, white)
+    screen.blit(menu_text, (400, 40))
+
+    saving_btn = pygame.draw.rect(
+        screen, gray, [WIDTH // 2 - 200, HEIGTH * 0.75, 400, 100], 0, 5)
+    saving_text = label_font.render('Save Beat', True, white)
+    screen.blit(saving_text, (WIDTH // 2 - 70, HEIGTH * 0.75 + 30))
+
     exit_btn = pygame.draw.rect(
         screen, gray, [WIDTH-200, HEIGTH-100, 180, 90], 0, 5)
     exit_text = label_font.render('Close', True, white)
     screen.blit(exit_text, (WIDTH - 160, HEIGTH - 70))
-    return exit_btn
+
+    if typing:
+        pygame.draw.rect(screen, gray, [400, 200, 600, 200], 0, 5)
+
+    entry_rect = pygame.draw.rect(screen, gray, [400, 200, 600, 200], 5, 5)
+    entry_text = label_font.render(f'{beat_name}', True, white)
+    screen.blit(entry_text, (430, 250))
+
+    return exit_btn, saving_btn, entry_rect
 
 
 def draw_load_menu():
     pygame.draw.rect(screen, black, [0, 0, WIDTH, HEIGTH])
+
+    menu_text = label_font.render(
+        'LOAD MENU: Select a Beat to Load', True, white)
+    screen.blit(menu_text, (400, 40))
+
+    loading_btn = pygame.draw.rect(
+        screen, gray, [WIDTH // 2 - 200, HEIGTH * 0.75, 400, 100], 0, 5)
+    loading_text = label_font.render('Load Beat', True, white)
+    screen.blit(loading_text, (WIDTH // 2 - 70, HEIGTH * 0.75 + 30))
+
+    delete_btn = pygame.draw.rect(
+        screen, gray, [(WIDTH//2) - 500, HEIGTH * 0.75, 200, 100], 0, 5)
+    delete_text = label_font.render('Delete Beat', True, white)
+    screen.blit(delete_text, ((WIDTH//2) - 485, HEIGTH * 0.75 + 30))
+
     exit_btn = pygame.draw.rect(
         screen, gray, [WIDTH-200, HEIGTH-100, 180, 90], 0, 5)
     exit_text = label_font.render('Close', True, white)
     screen.blit(exit_text, (WIDTH - 160, HEIGTH - 70))
-    return exit_btn
+    return exit_btn, loading_btn, delete_btn
 
 
 run = True
@@ -205,9 +240,10 @@ while(run):
     screen.blit(clear_text, (1160, HEIGTH - 120))
 
     if save_menu:
-        exit_button = draw_save_menu()
+        exit_button, saving_button, entry_rectangle = draw_save_menu(
+            beat_name, typing)
     if load_menu:
-        exit_button = draw_load_menu()
+        exit_button, loading_button, delete_button = draw_load_menu()
 
     if beat_changed:
         play_notes()
@@ -255,6 +291,27 @@ while(run):
                 save_menu = False
                 load_menu = False
                 playing = True
+                beat_name = ''
+                typing = False
+            elif entry_rectangle.collidepoint(event.pos):
+                if typing:
+                    typing = False
+                elif not typing:
+                    typing = True
+            elif saving_button.collidepoint(event.pos):
+                with open('saved_beats.txt', 'w') as file:
+                    saved_beats.append(
+                        f'\nname: {beat_name}, beats: {beats}, bpm: {bpm}, selected: {clicked}')
+                    for i in range(len(saved_beats)):
+                        file.write(str(saved_beats[i]))
+                save_menu = False
+                typing = False
+                beat_name = ''
+        if event.type == pygame.TEXTINPUT and typing:
+            beat_name += event.text
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKSPACE and len(beat_name) > 0 and typing:
+                beat_name = beat_name[:-1]
 
     beat_length = 3600 // bpm
 
