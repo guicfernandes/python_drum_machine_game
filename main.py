@@ -332,22 +332,34 @@ while(run):
                 playing = True
                 beat_name = ''
                 typing = False
-            elif loaded_rectangle:
-                index = (event.pos[1] - 100) // 50
-            elif entry_rectangle.collidepoint(event.pos):
-                if typing:
+            if load_menu:
+                if loaded_rectangle.collidepoint(event.pos):
+                    index = (event.pos[1] - 100) // 50
+                elif delete_button.collidepoint(event.pos):
+                    if 0 <= index < len(saved_beats):
+                        saved_beats.pop(index)
+                elif loading_button.collidepoint(event.pos):
+                    if 0 <= index < len(saved_beats):
+                        beats = loaded_info[0]
+                        bpm = loaded_info[1]
+                        clicked = loaded_info[2]
+                        index = 100
+                        load_menu = False
+            if save_menu:
+                if entry_rectangle.collidepoint(event.pos):
+                    if typing:
+                        typing = False
+                    elif not typing:
+                        typing = True
+                elif saving_button.collidepoint(event.pos):
+                    with open('saved_beats.txt', 'w') as file:
+                        saved_beats.append(
+                            f'\nname: {beat_name}, beats: {beats}, bpm: {bpm}, selected: {clicked}')
+                        for i in range(len(saved_beats)):
+                            file.write(str(saved_beats[i]))
+                    save_menu = False
                     typing = False
-                elif not typing:
-                    typing = True
-            elif saving_button.collidepoint(event.pos):
-                with open('saved_beats.txt', 'w') as file:
-                    saved_beats.append(
-                        f'\nname: {beat_name}, beats: {beats}, bpm: {bpm}, selected: {clicked}')
-                    for i in range(len(saved_beats)):
-                        file.write(str(saved_beats[i]))
-                save_menu = False
-                typing = False
-                beat_name = ''
+                    beat_name = ''
         if event.type == pygame.TEXTINPUT and typing:
             beat_name += event.text
         if event.type == pygame.KEYDOWN:
