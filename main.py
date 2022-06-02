@@ -1,5 +1,5 @@
 import pygame
-from pygame import KEYDOWN, mixer
+from pygame import mixer
 
 
 pygame.init()
